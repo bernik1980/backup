@@ -16,7 +16,7 @@ Used für easily backup databases and files of a server to an external hard-driv
    * postgres: Dump binary
    * file: The file/directory itself
 2. Each backup is zipped with best compression
-3. Each zip is saved/uploaded with each dataSource
+3. Each zip is saved/uploaded with each dataTarget
    * directory: Copy to a folder
    * dropbox: Uploaded to dropbox
 4. Old backups are deleted based on a strategry
