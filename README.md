@@ -1,7 +1,10 @@
 # backup
-A .NET application to backup databases (mssql, postgresql, mysql) and files to a directory or a dropbox-account.
+A .NET application to backup databases and files to another directory or a dropbox-account.
 
-Used für easily backup databases and files of a server to an external hard-drive or a customer dropbox.
+## Supported databases
+- Microsoft-SQL-Server and Microsoft-SQL-Server Express Edition
+- MySQL
+- Postgre SQL
 
 ## Setup
 - Copy the binaries to a folder any folder you like
