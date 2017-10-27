@@ -314,6 +314,8 @@ class Program
 
 		foreach (var provider in sources)
 		{
+			Program.Logger.Log("Zipping {0} backups of ›{1}‹", provider.Value.Count(), provider.Key.Config.Name);
+
 			// prefix backup with provider name, to ensure unique file names
 			var namePrefix = provider.Key.Config.Name;
 			// be sure to only contain valid file name chars
@@ -322,8 +324,6 @@ class Program
 			foreach (var file in provider.Value)
 			{
 				var fileZip = Path.Combine(_directoryTemp, string.Format("{0}_{1}_{2:yyyyMMddHHmmss}.zip", namePrefix, file.Name, file.CreatedOn != null ? file.CreatedOn.Value : DateTime.UtcNow));
-
-				Program.Logger.Log("Zipping {0} to {1}", file.Name, Path.GetFileName(fileZip));
 
 				using (var zipFile = new ZipFile(fileZip))
 				{
@@ -366,6 +366,8 @@ class Program
 	{
 		foreach (var provider in providers)
 		{
+			Program.Logger.Log("Saving {0} backups with ›{1}‹", files.Count, provider.Target.Config.Name);
+
 			provider.Save(files);
 		}
 	}
