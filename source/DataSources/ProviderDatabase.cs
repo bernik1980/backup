@@ -132,35 +132,6 @@ namespace DataSources
 		{
 			return _connection.ContainsKey(key) ? _connection[key] : null;
 		}
-
-		/// <summary>
-		/// Each database class should return all databases available without any filter applied.
-		/// The filtering will be handled in GetDatabasesFiltered.
-		/// </summary>
-		/// <returns></returns>
-		protected abstract List<string> GetDatabases();
-
-		/// <summary>
-		/// Gets all databases calling GetDatabases() and apply _included and _excluded.
-		/// </summary>
-		/// <returns></returns>
-		protected List<string> GetDatabasesFiltered()
-		{
-			var databases = this.GetDatabases();
-
-			if (_included != null)
-			{
-				databases.RemoveAll(database => !_included.Contains(database));
-			}
-
-			// ignore excluded databases
-			if (_excluded != null)
-			{
-				databases.RemoveAll(database => _excluded.Contains(database));
-			}
-
-			return databases;
-		}
 		#endregion
 	}
 }

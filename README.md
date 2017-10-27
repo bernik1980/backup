@@ -5,6 +5,11 @@ A .NET application to backup databases and files to another directory or a dropb
 - Microsoft-SQL-Server and Microsoft-SQL-Server Express Edition
 - MySQL
 - Postgre SQL
+- SQLite
+
+## Other supported sources
+- directories
+- files
 
 ## Setup
 - Copy the binaries to a folder any folder you like
@@ -17,6 +22,7 @@ A .NET application to backup databases and files to another directory or a dropb
    * mssql: BACKUP function
    * mysql: Dump binary
    * postgres: Dump binary
+   * sqlite: Backup api of the ado.net provider
    * file: The file/directory itself
 2. Each backup is zipped with best compression
 3. Each zip is saved/uploaded with each dataTarget

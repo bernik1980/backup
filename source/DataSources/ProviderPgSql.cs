@@ -25,8 +25,10 @@ namespace DataSources
 		{
 			return "pg_dump.exe";
 		}
+		#endregion
 
-		protected override List<string> GetDatabases()
+		#region ProviderBase
+		protected override List<string> GetSources()
 		{
 			var databases = new List<string>();
 
@@ -59,12 +61,10 @@ namespace DataSources
 
 			return databases;
 		}
-		#endregion
 
-		#region ProviderBase
 		internal override IEnumerable<BackupFile> Load(string directory)
 		{
-			var databases = this.GetDatabasesFiltered();
+			var databases = this.GetSourcesFiltered();
 
 			if (databases.Count == 0)
 			{

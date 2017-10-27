@@ -178,6 +178,9 @@ class Program
 					case "mysql":
 						source = new DataSources.ProviderMySql(dataSource);
 						break;
+					case "sqlite":
+						source = new DataSources.ProviderSqlite(dataSource);
+						break;
 					case "directory":
 					case "file":
 						source = new DataSources.ProviderFile(dataSource);

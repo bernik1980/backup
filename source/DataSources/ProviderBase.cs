@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using ValueObjects;
 
 namespace DataSources
@@ -25,6 +26,11 @@ namespace DataSources
 
 		internal ProviderBase(Configurations.DataSource config)
 		{
+			if (string.IsNullOrEmpty(config.Source))
+			{
+				throw new Exception("No source specified");
+			}
+
 			_config = config;
 
 			// get excluded databases
@@ -56,5 +62,34 @@ namespace DataSources
 		/// <param name="directory"></param>
 		/// <returns></returns>
 		internal abstract IEnumerable<BackupFile> Load(string directory);
+
+		/// <summary>
+		/// Each provider class should return all possible source files available without any filter applied.
+		/// The filtering will be handled in GetSourcesFiltered.
+		/// </summary>
+		/// <returns></returns>
+		protected abstract List<string> GetSources();
+
+		/// <summary>
+		/// Gets all possible source files calling GetDatabases() and apply _included and _excluded.
+		/// </summary>
+		/// <returns></returns>
+		protected List<string> GetSourcesFiltered()
+		{
+			var sources = this.GetSources();
+
+			if (_included != null)
+			{
+				sources.RemoveAll(source => !_included.Contains(source));
+			}
+
+			// ignore excluded databases
+			if (_excluded != null)
+			{
+				sources.RemoveAll(source => _excluded.Contains(source));
+			}
+
+			return sources;
+		}
 	}
 }

@@ -9,7 +9,12 @@ namespace DataStrategies
 	internal abstract class ProviderBase : IDisposable
 	{
 		protected Configurations.DataStrategy _config;
+
 		protected DataTargets.ProviderBase _target;
+		/// <summary>
+		/// The related target.
+		/// </summary>
+		public DataTargets.ProviderBase Target { get { return _target; } }
 
 		/// <summary>
 		/// The ensure, that each backup is handled via the same timestamp, we du not use DateTime.UtcNow every time, but init the timestamp when the provider is created.
