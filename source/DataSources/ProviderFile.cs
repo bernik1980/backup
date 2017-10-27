@@ -18,16 +18,23 @@ namespace DataSources
 		#endregion
 
 		#region ProviderBase
-		internal override IEnumerable<BackupFile> Load(string directory)
+		protected override List<string> GetSources()
 		{
-			if (!File.Exists(_config.Source) && !Directory.Exists(_config.Source))
+			var files = new List<string>();
+
+			if (File.Exists(_config.Source) || Directory.Exists(_config.Source))
 			{
-				return null;
+				files.Add(_config.Source);
 			}
 
-			// TODO: Apply _includes and _excludes
+			return files;
+		}
 
-			return new BackupFile[] { new BackupFile(_config.Source) { CreatedOn = DateTime.UtcNow } };
+		internal override IEnumerable<BackupFile> Load(string directory)
+		{
+			var files = this.GetSourcesFiltered();
+
+			return files.Count > 0 ? new BackupFile[] { new BackupFile(files[0]) { CreatedOn = DateTime.UtcNow } } : null;
 		}
 		#endregion
 	}
