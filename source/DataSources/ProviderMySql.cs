@@ -49,6 +49,7 @@ namespace DataSources
 				{
 					cmd.CommandType = CommandType.Text;
 					cmd.CommandText = "SHOW DATABASES";
+					cmd.CommandTimeout = _timeout;
 					using (var reader = cmd.ExecuteReader())
 					{
 						while (reader.Read())

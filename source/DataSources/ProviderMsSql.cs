@@ -74,6 +74,7 @@ namespace DataSources
 				{
 					cmd.CommandType = CommandType.Text;
 					cmd.CommandText = "SELECT Name FROM master..sysdatabases WHERE databasepropertyex([Name],'Status') = 'online'";
+					cmd.CommandTimeout = _timeout;
 					using (var reader = cmd.ExecuteReader())
 					{
 						while (reader.Read())
@@ -112,7 +113,7 @@ namespace DataSources
 					{
 						cmd.CommandType = CommandType.Text;
 						cmd.CommandText = "BACKUP DATABASE @database TO DISK = @filePath WITH FORMAT";
-						cmd.CommandTimeout = 120;
+						cmd.CommandTimeout = _timeout;
 						cmd.Parameters.AddWithValue("@database", database);
 						cmd.Parameters.AddWithValue("@filePath", file.Path);
 						try

@@ -49,6 +49,7 @@ namespace DataSources
 				{
 					cmd.CommandType = CommandType.Text;
 					cmd.CommandText = "SELECT datname FROM pg_database WHERE datistemplate = FALSE";
+					cmd.CommandTimeout = _timeout;
 					using (var reader = cmd.ExecuteReader())
 					{
 						while (reader.Read())

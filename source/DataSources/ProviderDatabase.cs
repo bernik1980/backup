@@ -18,6 +18,7 @@ namespace DataSources
 		protected string _bin { get { return this.GetValueFromConnection("bin"); } }
 		protected string _host { get { return this.GetValueFromConnection("host"); } }
 		protected string _port { get { return this.GetValueFromConnection("port"); } }
+		protected int _timeout {  get { return this.GetValueFromConnectionInt("timeout", 120); } }
 		protected string _user { get { return this.GetValueFromConnection("user"); } }
 		protected string _password { get { return this.GetValueFromConnection("password"); } }
 
@@ -128,9 +129,18 @@ namespace DataSources
 		/// </summary>
 		/// <param name="key"></param>
 		/// <returns></returns>
-		protected string GetValueFromConnection(string key)
+		protected string GetValueFromConnection(string key, string defaultValue = null)
 		{
-			return _connection.ContainsKey(key) ? _connection[key] : null;
+			return _connection.ContainsKey(key) ? _connection[key] : defaultValue;
+		}
+
+		protected int GetValueFromConnectionInt(string key, int defaultValue = 0)
+		{
+			var value = defaultValue;
+
+			int.TryParse(this.GetValueFromConnection(key), out value);
+
+			return value;
 		}
 		#endregion
 	}
