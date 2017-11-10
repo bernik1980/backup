@@ -33,7 +33,7 @@ namespace DataSources
 			var databases = new List<string>();
 
 			// use simply script to get all databases
-			using (var conn = new MySqlConnection(string.Format("Data Source={0};User Id={1};Password={2}", _host, _user, _password)))
+			using (var conn = new MySqlConnection(string.Format("Data Source={0};User Id={1};Password={2};Port={3}", _host, _user, _password, _port ?? "3306")))
 			{
 				try
 				{

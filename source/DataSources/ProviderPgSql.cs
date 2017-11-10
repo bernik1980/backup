@@ -33,7 +33,7 @@ namespace DataSources
 			var databases = new List<string>();
 
 			// use simply script to get all databases
-			using (var conn = new NpgsqlConnection(string.Format("Host={0};Username={1};Password={2}", _host, _user, _password)))
+			using (var conn = new NpgsqlConnection(string.Format("Host={0};Username={1};Password={2};Port={3}", _host, _user, _password, _port ?? "5432")))
 			{
 				try
 				{

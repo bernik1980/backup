@@ -30,6 +30,7 @@ namespace DataSources
 			var parameters = new Dictionary<string, string>();
 
 			parameters.Add("Data Source", _host);
+			parameters.Add("Port", _port ?? "1433");
 			// check if its integrated security or user-password
 			if (this.GetValueFromConnection("integratedsecurity") != null)
 			{
