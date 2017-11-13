@@ -175,6 +175,9 @@ class Program
 					case "postgresql":
 						source = new DataSources.ProviderPgSql(dataSource);
 						break;
+					case "oracle":
+						source = new DataSources.ProviderOracle(dataSource);
+						break;
 					case "mysql":
 						source = new DataSources.ProviderMySql(dataSource);
 						break;

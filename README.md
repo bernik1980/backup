@@ -2,6 +2,7 @@
 A .NET application to backup databases and files to another directory or a dropbox-account.
 
 ## Supported databases
+- Oracle
 - Microsoft-SQL-Server and Microsoft-SQL-Server Express Edition
 - MySQL
 - Postgre SQL
@@ -19,6 +20,7 @@ A .NET application to backup databases and files to another directory or a dropb
 
 ## Procedure
 1. Each dataSource creates its backups
+   * oracle: RMAN binary
    * mssql: BACKUP function
    * mysql: Dump binary
    * postgres: Dump binary

@@ -70,6 +70,9 @@
     <Reference Include="Npgsql, Version=3.2.5.0, Culture=neutral, PublicKeyToken=5d8b90d52f46fda7, processorArchitecture=MSIL">
       <HintPath>packages\Npgsql.3.2.5\lib\net451\Npgsql.dll</HintPath>
     </Reference>
+    <Reference Include="Oracle.ManagedDataAccess, Version=4.122.1.0, Culture=neutral, PublicKeyToken=89b483f429c47342, processorArchitecture=MSIL">
+      <HintPath>packages\Oracle.ManagedDataAccess.12.2.1100\lib\net40\Oracle.ManagedDataAccess.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.configuration" />
     <Reference Include="System.Core" />
@@ -98,6 +101,7 @@
     <Compile Include="DataSources\ProviderFile.cs" />
     <Compile Include="DataSources\ProviderMySql.cs" />
     <Compile Include="DataSources\ProviderMsSql.cs" />
+    <Compile Include="DataSources\ProviderOracle.cs" />
     <Compile Include="DataSources\ProviderPgSql.cs" />
     <Compile Include="DataSources\ProviderSqlite.cs" />
     <Compile Include="DataStrategies\ProviderBase.cs" />

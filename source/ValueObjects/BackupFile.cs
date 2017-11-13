@@ -19,7 +19,7 @@ namespace ValueObjects
 		/// <summary>
 		/// The name of this backup. This will be used when saving the backup to a target.
 		/// </summary>
-		public string Name { get; private set; }
+		public string Name { get; set; }
 		/// <summary>
 		/// The full path of the backup.
 		/// </summary>
