@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Security.AccessControl;
 using System.Security.Principal;
+using System.Threading.Tasks;
 using ValueObjects;
 
 /// <summary>
@@ -296,9 +297,21 @@ class Program
 	{
 		var files = new Dictionary<DataSources.ProviderBase, IEnumerable<BackupFile>>();
 
+		// loading is handled prallel in different tasks for each provider
+		var tasks = new Dictionary<DataSources.ProviderBase, Task<IEnumerable<BackupFile>>>();
 		foreach (var provider in providers)
 		{
-			var filesProvider = provider.Load(_directoryTemp);
+			var task = Task<IEnumerable<BackupFile>>.Run(() => { return provider.Load(_directoryTemp); });
+			tasks.Add(provider, task);
+		}
+
+		// join all tasks
+		foreach (var task in tasks)
+		{
+			task.Value.Wait();
+
+			var provider = task.Key;
+			var filesProvider = task.Value.Result;
 
 			Logger.Log("Created {0} backups for ›{1}‹.", filesProvider == null ? "0" : filesProvider.Count().ToString(), provider.Config.Name);
 
@@ -317,7 +330,7 @@ class Program
 
 		foreach (var provider in sources)
 		{
-			Program.Logger.Log("Zipping {0} backups of ›{1}‹", provider.Value.Count(), provider.Key.Config.Name);
+			Program.Logger.Log("Zipping {0} backups for ›{1}‹", provider.Value.Count(), provider.Key.Config.Name);
 
 			// prefix backup with provider name, to ensure unique file names
 			var namePrefix = provider.Key.Config.Name;
@@ -367,11 +380,20 @@ class Program
 	/// <param name="files"></param>
 	private void TargetsSave(IEnumerable<DataStrategies.ProviderBase> providers, List<string> files)
 	{
+		// loading is handled prallel in different tasks for each provider
+		var tasks = new Dictionary<DataStrategies.ProviderBase, Task>();
 		foreach (var provider in providers)
 		{
 			Program.Logger.Log("Saving {0} backups with ›{1}‹", files.Count, provider.Target.Config.Name);
 
-			provider.Save(files);
+			var task = Task.Run(() => { provider.Save(files); });
+			tasks.Add(provider, task);
+			task.ContinueWith(t => Program.Logger.Log("Completed saving with ›{0}‹", provider.Target.Config.Name));
+		}
+
+		foreach (var task in tasks)
+		{
+			task.Value.Wait();
 		}
 	}
 	#endregion
