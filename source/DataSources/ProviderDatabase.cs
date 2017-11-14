@@ -37,6 +37,12 @@ namespace DataSources
 			{
 				var nameValueArgs = nameValue.Split('=');
 				var name = nameValueArgs[0].Trim().ToLower().Replace(" ", "");
+
+				if (string.IsNullOrEmpty(name))
+				{
+					continue;
+				}
+
 				var value = nameValueArgs.Length > 1 ? nameValueArgs[1].Trim() : null;
 
 				_connection[name.ToLower()] = value;
