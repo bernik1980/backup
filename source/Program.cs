@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Security.AccessControl;
 using System.Security.Principal;
 using System.Threading.Tasks;
@@ -52,10 +53,14 @@ class Program
 		var loggers = new List<LoggerBase>();
 		loggers.Add(loggerConsole);
 
-		// try to create the file logger
+
+		// create the file logger
+		var directoryLogs = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+		directoryLogs = Path.Combine(directoryLogs, Assembly.GetExecutingAssembly().GetName().Name);
+		directoryLogs = Path.Combine(directoryLogs, "Logs");
 		try
 		{
-			loggers.Add(new LoggerFile());
+			loggers.Add(new LoggerFile(directoryLogs));
 		}
 		catch (Exception ex)
 		{

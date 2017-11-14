@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.Reflection;
 
 namespace Logging
 {
@@ -28,12 +27,9 @@ namespace Logging
 		/// </summary>
 		private readonly string _header = string.Format("Timestamp{0}Text", FieldSeparator);
 
-		public LoggerFile()
+		public LoggerFile(string directory)
 		{
-			// initialize logs directory
-			_directoryLogs = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-			_directoryLogs = Path.Combine(_directoryLogs, Assembly.GetExecutingAssembly().GetName().Name);
-			_directoryLogs = Path.Combine(_directoryLogs, "Logs");
+			_directoryLogs = directory;
 
 			if (!Directory.Exists(_directoryLogs))
 			{
