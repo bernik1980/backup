@@ -76,19 +76,18 @@ namespace DataSources
 		private List<string> GetCmdContent(string directory, string database)
 		{
 			var lines = new List<string>();
-			lines.Add("sql 'alter system archive log current';");
+			lines.Add("SQL 'ALTER SYSTEM ARCHIVE LOG CURRENT';");
 			lines.Add("RUN");
 			lines.Add("{");
-			lines.Add("configure controlfile autobackup on;");
-			lines.Add("set command id to 'ORCLOnlineBackupFull';");
+			lines.Add(string.Format("SET COMMAND ID TO '{0}OnlineBackupFull';", database));
 			//lines.Add("ALLOCATE CHANNEL c1 DEVICE TYPE disk;");
 			//lines.Add("ALLOCATE CHANNEL c2 DEVICE TYPE disk;");
 			//lines.Add("ALLOCATE CHANNEL c3 DEVICE TYPE disk;");
 			//lines.Add("ALLOCATE CHANNEL c4 DEVICE TYPE disk;");
-			lines.Add(string.Format("backup AS COMPRESSED BACKUPSET full database tag {0}_FULL format '{1}\\%d_%I.full';", database, directory));
-			lines.Add("sql 'alter system archive log current';");
-			lines.Add(string.Format("backup tag {0}_ARCHIVE format '{1}\\%d_%I.archive' archivelog all delete all input;", database, directory));
-			lines.Add(string.Format("backup tag {0}_CONTROL current controlfile format '{1}\\%d_%I.control';", database, directory));
+			lines.Add(string.Format("BACKUP FULL DATABASE TAG '{0}_FULL' FORMAT '{1}\\%d_%I.full';", database, directory));
+			lines.Add("SQL 'ALTER SYSTEM ARCHIVE LOG CURRENT';");
+			lines.Add(string.Format("BACKUP TAG '{0}_ARCHIVE' FORMAT '{1}\\%d_%I.archive' ARCHIVELOG ALL DELETE ALL INPUT;", database, directory));
+			lines.Add(string.Format("BACKUP TAG '{0}_CONTROL' CURRENT CONTROLFILE FORMAT '{1}\\%d_%I.control';", database, directory));
 			//lines.Add("release channel c1;");
 			//lines.Add("release channel c2;");
 			//lines.Add("release channel c3;");
