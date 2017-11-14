@@ -31,15 +31,19 @@ namespace DataSources
 
 			parameters.Add("Data Source", _host);
 			parameters.Add("Port", _port ?? "1433");
-			// check if its integrated security or user-password
-			if (this.GetValueFromConnection("integratedsecurity") != null)
+			if (!string.IsNullOrEmpty(_port))
 			{
-				parameters.Add("Integrated Security", this.GetValueFromConnection("integratedsecurity"));
+				parameters["Data Source"] += "," + _port;
 			}
-			else
+			if (_user != null)
 			{
 				parameters.Add("User Id", _user);
 				parameters.Add("Password", _password);
+			}
+			else
+			{
+				// if no user is specified, we assume integrated security
+				parameters.Add("Integrated Security", "SSPI");
 			}
 
 			var connectionString = string.Join(";", parameters.Select(p => p.Key + "=" + p.Value));
