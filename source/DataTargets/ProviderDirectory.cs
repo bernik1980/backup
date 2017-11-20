@@ -1,6 +1,8 @@
-﻿using System;
+﻿using Logging;
+using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace DataTargets
 {
@@ -11,8 +13,8 @@ namespace DataTargets
 	internal class ProviderDirectory : ProviderBase
 	{
 		#region Initialization
-		internal ProviderDirectory(Configurations.DataTarget config)
-			: base(config)
+		internal ProviderDirectory(Configurations.DataTarget config, LoggerBase logger)
+			: base(config, logger)
 		{
 		}
 		#endregion
@@ -32,11 +34,13 @@ namespace DataTargets
 				}
 				catch (Exception ex)
 				{
-					Program.Logger.Log(string.Format("Can not create backup. Could not create backup directory at {0}. Error: {1}.", directoryBackup, ex.ToString()));
+					_logger.Log(_config.Name, LoggerPriorities.Error, string.Format("Can not create backup. Could not create backup directory at {0}. Error: {1}.", directoryBackup, ex.ToString()));
 
 					return null;
 				}
 			}
+
+			_logger.Log(_config.Name, LoggerPriorities.Info, "Saving {0} backup{1:'s';'s';''}.", files.Count(), files.Count() - 1);
 
 			var filesSaved = new List<string>();
 
@@ -53,9 +57,11 @@ namespace DataTargets
 				}
 				catch (Exception ex)
 				{
-					Program.Logger.Log("Could not copy zipped backup to backup directory. Error: ›{0}‹", ex.ToString());
+					_logger.Log(_config.Name, LoggerPriorities.Error, "Could not copy zipped backup to backup directory. Error: {0}", ex.ToString());
 				}
 			}
+
+			_logger.Log(_config.Name, LoggerPriorities.Info, "Saved {0} backup{1:'s';'s';''}.", filesSaved.Count, filesSaved.Count - 1);
 
 			return filesSaved;
 		}

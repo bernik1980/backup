@@ -1,8 +1,10 @@
 ﻿using Dropbox.Api;
 using Dropbox.Api.Files;
+using Logging;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 
@@ -26,8 +28,8 @@ namespace DataTargets
 		private DropboxClient _client;
 
 		#region Initialization
-		internal ProviderDropbox(Configurations.DataTarget config)
-			: base(config)
+		internal ProviderDropbox(Configurations.DataTarget config, LoggerBase logger)
+			: base(config, logger)
 		{
 			// parse config
 			// we assume the target is the token
@@ -55,7 +57,8 @@ namespace DataTargets
 
 			if (string.IsNullOrEmpty(token))
 			{
-				throw new Exception("Token is missing.");
+				_logger.Log(_config.Name, LoggerPriorities.Error, "Token is missing.");
+				return;
 			}
 
 			// format path
@@ -107,6 +110,8 @@ namespace DataTargets
 		#region Functionality
 		internal override List<string> Save(string directory, IEnumerable<string> files)
 		{
+			_logger.Log(_config.Name, LoggerPriorities.Info, "Saving {0} backup{1:'s';'s';''}.", files.Count(), files.Count() - 1);
+
 			var filesSaved = new List<string>();
 
 			foreach (var file in files)
@@ -119,9 +124,11 @@ namespace DataTargets
 				}
 				catch (Exception ex)
 				{
-					Program.Logger.Log("Could not upload file to dropbox. File: {0}, Error: {1}", Path.GetFileName(file), ex.ToString());
+					_logger.Log(_config.Name, LoggerPriorities.Error, "Could not upload file to dropbox. File: {0}, Error: {1}", Path.GetFileName(file), ex);
 				}
 			}
+
+			_logger.Log(_config.Name, LoggerPriorities.Info, "Saved {0} backup{1:'s';'s';''}.", filesSaved.Count, filesSaved.Count - 1);
 
 			return filesSaved;
 		}
@@ -140,6 +147,8 @@ namespace DataTargets
 
 			using (var fileStream = new FileStream(file, FileMode.Open, FileAccess.Read))
 			{
+				_logger.Log(_config.Name, LoggerPriorities.Verbose, "Uploading file {0} with size {1:#,##0.00} kb to directory {2}.", file, fileStream.Length / 1024, directory);
+
 				while (true)
 				{
 					var byteRead = fileStream.Read(buffer, 0, buffer.Length);

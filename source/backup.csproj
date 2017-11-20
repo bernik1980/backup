@@ -90,10 +90,13 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Configurations\DataStrategy.cs" />
+    <Compile Include="Configurations\Logger.cs" />
     <Compile Include="Configurations\DataTarget.cs" />
+    <Compile Include="Configurations\Loggers.cs" />
     <Compile Include="Configurations\DataTargets.cs" />
     <Compile Include="Configurations\DataSources.cs" />
     <Compile Include="Configurations\DataSource.cs" />
+    <Compile Include="Configurations\LoggerSection.cs" />
     <Compile Include="Configurations\DataTargetsSection.cs" />
     <Compile Include="Configurations\DataSourcesSection.cs" />
     <Compile Include="DataSources\ProviderBase.cs" />
@@ -113,7 +116,9 @@
     <Compile Include="Logging\LoggerConsole.cs" />
     <Compile Include="Logging\LoggerFile.cs" />
     <Compile Include="Logging\LoggerBase.cs" />
+    <Compile Include="Logging\LoggerMessage.cs" />
     <Compile Include="Logging\LoggerMultiple.cs" />
+    <Compile Include="Logging\LoggerPriorities.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ValueObjects\BackupFile.cs" />

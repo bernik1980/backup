@@ -18,7 +18,9 @@ class Program
 	/// <summary>
 	/// Logger for the whole application.
 	/// </summary>
-	public static LoggerBase Logger { get; private set; }
+	private LoggerBase _logger;
+
+	private const string _loggerTag = "program";
 
 	/// <summary>
 	/// Created backup will be saved here, before handled by the target provider.
@@ -32,74 +34,7 @@ class Program
 	/// <param name="args"></param>
 	static void Main(string[] args)
 	{
-		InitializeLogger();
-
 		new Program().Run();
-	}
-
-	public Program()
-	{
-		InitializeTempDirectory();
-	}
-
-	/// <summary>
-	/// Creates the logger for the application.
-	/// </summary>
-	private static void InitializeLogger()
-	{
-		// console logging is always available
-		var loggerConsole = new LoggerConsole();
-
-		var loggers = new List<LoggerBase>();
-		loggers.Add(loggerConsole);
-
-
-		// create the file logger
-		var directoryLogs = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-		directoryLogs = Path.Combine(directoryLogs, Assembly.GetExecutingAssembly().GetName().Name);
-		directoryLogs = Path.Combine(directoryLogs, "Logs");
-		try
-		{
-			loggers.Add(new LoggerFile(directoryLogs));
-		}
-		catch (Exception ex)
-		{
-			loggerConsole.Log("Could not initilalize file logging. Error: {0}", ex.ToString());
-		}
-
-		Program.Logger = new LoggerMultiple(loggers);
-	}
-
-	/// <summary>
-	/// Creates the temp directory for the backups.
-	/// It will be created at the system temp path (Path.GetTempPath()).
-	/// Full write permission will be set, to have it fully available by all data sources.
-	/// </summary>
-	private void InitializeTempDirectory()
-	{
-		var directoryTemp = Path.GetTempPath();
-		directoryTemp = Path.Combine(directoryTemp, Guid.NewGuid().ToString());
-
-		try
-		{
-			Directory.CreateDirectory(directoryTemp);
-		}
-		catch (Exception ex)
-		{
-			var text = string.Format("Can not create backup.Could not create temp directory at { 0}. Error: { 1}.", directoryTemp, ex.ToString());
-
-			Program.Logger.Log(text);
-
-			throw new Exception(text);
-		}
-
-		// set full access
-		var directoryInfo = new DirectoryInfo(directoryTemp);
-		var directorySecurity = directoryInfo.GetAccessControl();
-		directorySecurity.AddAccessRule(new FileSystemAccessRule(new SecurityIdentifier(WellKnownSidType.WorldSid, null), FileSystemRights.FullControl, InheritanceFlags.ObjectInherit | InheritanceFlags.ContainerInherit, PropagationFlags.NoPropagateInherit, AccessControlType.Allow));
-		directoryInfo.SetAccessControl(directorySecurity);
-
-		_directoryTemp = directoryTemp;
 	}
 	#endregion
 
@@ -109,7 +44,34 @@ class Program
 	/// </summary>
 	private void Run()
 	{
-		Program.Logger.Log("Starting backup run.");
+		AppDomain.CurrentDomain.UnhandledException += (s, e) =>
+		{
+			if (_logger != null)
+			{
+				_logger.Log(_loggerTag, LoggerPriorities.Error, "An unhandled exception did occur: {0}", e.ExceptionObject);
+			}
+			else
+			{
+				Console.WriteLine("An unhandled exception did occur.");
+			}
+		};
+
+		// initialize logging
+		InitializeLogger();
+
+		_logger.Log(_loggerTag, LoggerPriorities.Info, "Starting backup run.");
+
+		// try to initialize temp directory
+		try
+		{
+			InitializeTempDirectory();
+		}
+		catch (Exception ex)
+		{
+			_logger.Log(_loggerTag, LoggerPriorities.Error, "Could not create temp directory at {0}. Error: {1}. Quitting", _directoryTemp, ex.ToString());
+
+			return;
+		}
 
 		// get sources and targets from config
 		var providersSource = this.GetSources();
@@ -117,13 +79,13 @@ class Program
 
 		if (providersSource.Count() == 0)
 		{
-			Program.Logger.Log("No dataSources found. Quitting.");
+			_logger.Log(_loggerTag, LoggerPriorities.Error, "No dataSources found. Quitting.");
 			return;
 		}
 
 		if (providersTarget.Count() == 0)
 		{
-			Program.Logger.Log("No dataTargets found. Quitting.");
+			_logger.Log(_loggerTag, LoggerPriorities.Error, "No dataTargets found. Quitting.");
 			return;
 		}
 
@@ -147,10 +109,126 @@ class Program
 		}
 		catch (Exception ex)
 		{
-			Logger.Log("Could not delete created temp directory. Directory: {0}, Error: {1}", _directoryTemp, ex.ToString());
+			_logger.Log(_loggerTag, LoggerPriorities.Error, "Could not delete created temp directory. Directory: {0}, Error: {1}", _directoryTemp, ex.ToString());
 		}
 
-		Logger.Log("Completed backup run.");
+		_logger.Log(_loggerTag, LoggerPriorities.Info, "Completed backup run.");
+	}
+
+	/// <summary>
+	/// Creates the logger for the application.
+	/// </summary>
+	private void InitializeLogger()
+	{
+		var loggers = new List<LoggerBase>();
+		// we want to show logger exception after all loggers have been initialized, so "remember" these
+		var loggersFailed = new Dictionary<string, Exception>();
+
+		// create loggers based on configuration
+		foreach (Configurations.Logger configLogger in Configurations.LoggerSection.GetLoggers())
+		{
+			if (string.IsNullOrEmpty(configLogger.Provider))
+			{
+				_logger.Log(_loggerTag, LoggerPriorities.Error, "Ignoring Logger without provider.");
+				continue;
+			}
+
+			// parse priorities
+			var priorities = LoggerPriorities.None;
+			if (!string.IsNullOrEmpty(configLogger.Priorities))
+			{
+				priorities = LoggerPriorities.None;
+
+				var configPriorities = configLogger.Priorities.ToLower().Split(',');
+				foreach (var configPriority in configPriorities)
+				{
+					switch (configPriority.Trim())
+					{
+						case "verbose":
+							priorities |= LoggerPriorities.Verbose;
+							break;
+						case "info":
+							priorities |= LoggerPriorities.Info;
+							break;
+						case "error":
+							priorities |= LoggerPriorities.Error;
+							break;
+					}
+				}
+			}
+
+			// if no priorities were found, log all
+			if (priorities == LoggerPriorities.None)
+			{
+				priorities = LoggerPriorities.All;
+			}
+
+			LoggerBase logger = null;
+
+			// try to greate loggers based on provider name
+			try
+			{
+				switch (configLogger.Provider.ToLower())
+				{
+					case "console":
+						logger = new LoggerConsole(priorities);
+						break;
+					case "file":
+						var directory = configLogger.Settings;
+						if (string.IsNullOrEmpty(directory))
+						{
+							directory = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+							directory = Path.Combine(directory, Assembly.GetExecutingAssembly().GetName().Name);
+							directory = Path.Combine(directory, "Logs");
+						}
+						else if (!Path.IsPathRooted(directory))
+						{
+							directory = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), directory);
+						}
+
+						logger = new LoggerFile(directory, priorities);
+						break;
+				}
+			}
+			catch (Exception ex)
+			{
+				loggersFailed.Add(configLogger.Provider, ex);
+			}
+
+			if (logger == null)
+			{
+				_logger.Log(_loggerTag, LoggerPriorities.Error, "Unknown logger {0}", configLogger.Provider);
+				continue;
+			}
+
+			loggers.Add(logger);
+		}
+
+		_logger = new LoggerMultiple(loggers);
+
+		foreach (var logger in loggersFailed)
+		{
+			_logger.Log(_loggerTag, LoggerPriorities.Error, "Could not create logger {0}. Error: {1}", logger.Key, logger.Value);
+		}
+	}
+
+	/// <summary>
+	/// Creates the temp directory for the backups.
+	/// It will be created at the system temp path (Path.GetTempPath()).
+	/// Full write permission will be set, to have it fully available by all data sources.
+	/// </summary>
+	private void InitializeTempDirectory()
+	{
+		_directoryTemp = Path.GetTempPath();
+		_directoryTemp = Path.Combine(_directoryTemp, Guid.NewGuid().ToString());
+
+		Directory.CreateDirectory(_directoryTemp);
+
+		// set full access
+		var directoryInfo = new DirectoryInfo(_directoryTemp);
+		var directorySecurity = directoryInfo.GetAccessControl();
+		directorySecurity.AddAccessRule(new FileSystemAccessRule(new SecurityIdentifier(WellKnownSidType.WorldSid, null), FileSystemRights.FullControl, InheritanceFlags.ObjectInherit | InheritanceFlags.ContainerInherit, PropagationFlags.NoPropagateInherit, AccessControlType.Allow));
+		directoryInfo.SetAccessControl(directorySecurity);
 	}
 
 	/// <summary>
@@ -165,46 +243,38 @@ class Program
 		{
 			if (string.IsNullOrEmpty(dataSource.Provider))
 			{
-				Program.Logger.Log("Ignoring DataSource without provider.");
+				_logger.Log(_loggerTag, LoggerPriorities.Error, "Ignoring DataSource without provider.");
 				continue;
 			}
 
 			DataSources.ProviderBase source = null;
 
-			try
+			switch (dataSource.Provider.ToLower().Trim())
 			{
-				switch (dataSource.Provider.ToLower().Trim())
-				{
-					case "mssql":
-						source = new DataSources.ProviderMsSql(dataSource);
-						break;
-					case "postgresql":
-						source = new DataSources.ProviderPgSql(dataSource);
-						break;
-					case "oracle":
-						source = new DataSources.ProviderOracle(dataSource);
-						break;
-					case "mysql":
-						source = new DataSources.ProviderMySql(dataSource);
-						break;
-					case "sqlite":
-						source = new DataSources.ProviderSqlite(dataSource);
-						break;
-					case "directory":
-					case "file":
-						source = new DataSources.ProviderFile(dataSource);
-						break;
-				}
-			}
-			catch (Exception ex)
-			{
-				Program.Logger.Log("Could not create DataSource ›{0}‹. Error: {1}", dataSource.Provider, ex);
-				continue;
+				case "mssql":
+					source = new DataSources.ProviderMsSql(dataSource, _logger);
+					break;
+				case "postgresql":
+					source = new DataSources.ProviderPgSql(dataSource, _logger);
+					break;
+				case "oracle":
+					source = new DataSources.ProviderOracle(dataSource, _logger);
+					break;
+				case "mysql":
+					source = new DataSources.ProviderMySql(dataSource, _logger);
+					break;
+				case "sqlite":
+					source = new DataSources.ProviderSqlite(dataSource, _logger);
+					break;
+				case "directory":
+				case "file":
+					source = new DataSources.ProviderFile(dataSource, _logger);
+					break;
 			}
 
 			if (source == null)
 			{
-				Program.Logger.Log("Unknown DataSource ›{0}‹", dataSource.Provider);
+				_logger.Log(_loggerTag, LoggerPriorities.Error, "Unknown DataSource {0}", dataSource.Provider);
 				continue;
 			}
 
@@ -227,7 +297,7 @@ class Program
 			// get target provider first
 			if (string.IsNullOrEmpty(dataTarget.Provider))
 			{
-				Program.Logger.Log("Ignoring DataTarget without provider.");
+				_logger.Log(_loggerTag, LoggerPriorities.Error, "Ignoring DataTarget without provider.");
 				continue;
 			}
 
@@ -236,16 +306,16 @@ class Program
 			switch (dataTarget.Provider.ToLower().Trim())
 			{
 				case "directory":
-					target = new DataTargets.ProviderDirectory(dataTarget);
+					target = new DataTargets.ProviderDirectory(dataTarget, _logger);
 					break;
 				case "dropbox":
-					target = new DataTargets.ProviderDropbox(dataTarget);
+					target = new DataTargets.ProviderDropbox(dataTarget, _logger);
 					break;
 			}
 
 			if (target == null)
 			{
-				Program.Logger.Log("Unknown DataTarget ›{0}‹", dataTarget.Provider);
+				_logger.Log(_loggerTag, LoggerPriorities.Error, "Unknown DataTarget {0}", dataTarget.Provider);
 				continue;
 			}
 
@@ -256,34 +326,26 @@ class Program
 
 			if (string.IsNullOrEmpty(dataTarget.Strategy.Provider))
 			{
-				Program.Logger.Log("Ignoring strategy without provider.");
+				_logger.Log(_loggerTag, LoggerPriorities.Error, "Ignoring strategy without provider.");
 				continue;
 			}
 
 			// get strategy second
 			DataStrategies.ProviderBase strategy = null;
 
-			try
+			switch (dataTarget.Strategy.Provider.ToLower().Trim())
 			{
-				switch (dataTarget.Strategy.Provider.ToLower().Trim())
-				{
-					case "days":
-						strategy = new DataStrategies.ProviderDays(dataTarget.Strategy, target);
-						break;
-					case "generations":
-						strategy = new DataStrategies.ProviderGenerations(dataTarget.Strategy, target);
-						break;
-				}
-			}
-			catch (Exception ex)
-			{
-				Program.Logger.Log("Could not initialize strategry ›{0}‹. Error: {1}", dataTarget.Strategy.Provider, ex);
-				continue;
+				case "days":
+					strategy = new DataStrategies.ProviderDays(dataTarget.Strategy, target, _logger);
+					break;
+				case "generations":
+					strategy = new DataStrategies.ProviderGenerations(dataTarget.Strategy, target, _logger);
+					break;
 			}
 
 			if (strategy == null)
 			{
-				Program.Logger.Log("Unknown Strategry ›{0}‹", dataTarget.Strategy.Provider);
+				_logger.Log(_loggerTag, LoggerPriorities.Error, "Unknown strategry {0}", dataTarget.Strategy.Provider);
 				continue;
 			}
 
@@ -318,8 +380,6 @@ class Program
 			var provider = task.Key;
 			var filesProvider = task.Value.Result;
 
-			Logger.Log("Created {0} backups for ›{1}‹.", filesProvider == null ? "0" : filesProvider.Count().ToString(), provider.Config.Name);
-
 			if (filesProvider != null && filesProvider.Count() > 0)
 			{
 				files.Add(provider, filesProvider);
@@ -335,7 +395,7 @@ class Program
 
 		foreach (var provider in sources)
 		{
-			Program.Logger.Log("Zipping {0} backups for ›{1}‹", provider.Value.Count(), provider.Key.Config.Name);
+			_logger.Log(provider.Key.Config.Name, LoggerPriorities.Info, "Zipping {0} backup{1:'s';'s';''}.", provider.Value.Count(), provider.Value.Count() - 1);
 
 			// prefix backup with provider name, to ensure unique file names
 			var namePrefix = provider.Key.Config.Name;
@@ -369,7 +429,7 @@ class Program
 					}
 					catch (Exception ex)
 					{
-						Program.Logger.Log("Could not zip source. Zip: {0}, Error: {1}", Path.GetFileName(fileZip), ex);
+						_logger.Log(_loggerTag, LoggerPriorities.Error, "Could not zip source. Zip: {0}, Error: {1}", Path.GetFileName(fileZip), ex);
 					}
 				}
 			}
@@ -389,11 +449,8 @@ class Program
 		var tasks = new Dictionary<DataStrategies.ProviderBase, Task>();
 		foreach (var provider in providers)
 		{
-			Program.Logger.Log("Saving {0} backups with ›{1}‹", files.Count, provider.Target.Config.Name);
-
 			var task = Task.Run(() => { provider.Save(files); });
 			tasks.Add(provider, task);
-			task.ContinueWith(t => Program.Logger.Log("Completed saving with ›{0}‹", provider.Target.Config.Name));
 		}
 
 		foreach (var task in tasks)

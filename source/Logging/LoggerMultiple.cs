@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace Logging
 {
@@ -6,16 +7,21 @@ namespace Logging
 	{
 		private IEnumerable<LoggerBase> _loggers;
 
-		public LoggerMultiple(IEnumerable<LoggerBase> loggers)
+		public LoggerMultiple(LoggerPriorities priorities) : base(priorities)
+		{
+			throw new NotSupportedException("LoggerMultiple can not be initilized with priorities, since its not logging itself.");
+		}
+
+		public LoggerMultiple(IEnumerable<LoggerBase> loggers) : base(LoggerPriorities.All)
 		{
 			_loggers = loggers;
 		}
 
-		public override void Log(string text)
+		protected override void LogInternal(LoggerMessage message)
 		{
 			foreach (var logger in _loggers)
 			{
-				logger.Log(text);
+				logger.Log(message);
 			}
 		}
 	}

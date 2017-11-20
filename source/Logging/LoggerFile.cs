@@ -27,16 +27,19 @@ namespace Logging
 		/// </summary>
 		private readonly string _header = string.Format("Timestamp{0}Text", FieldSeparator);
 
-		public LoggerFile(string directory)
+		public LoggerFile(string directory, LoggerPriorities priorities) : base(priorities)
 		{
 			_directoryLogs = directory;
 
+			// this will thow if parent directory does not exist or permission is missing
+			// this is ok to let the outside caller know about this
 			if (!Directory.Exists(_directoryLogs))
 			{
 				Directory.CreateDirectory(_directoryLogs);
 			}
 
-			this.Log("Initialized logging", true);
+			// write empty message to test access
+			this.Log(new LoggerMessage { Text = "Testing file access." }, true);
 		}
 
 		/// <summary>
@@ -49,26 +52,12 @@ namespace Logging
 			return Path.Combine(_directoryLogs, date.ToString("yyyyMMdd'.csv'"));
 		}
 
-		/// <summary>
-		/// Adds a new log entry.
-		/// </summary>
-		/// <param name="caller">The instance making the log call.</param>
-		/// <param name="user">The user currently logged in.</param>
-		/// <param name="project">The project currently active.</param>
-		/// <param name="messageParams">Values to log for ONE message.</param>
-		public override void Log(string text)
+		protected override void LogInternal(LoggerMessage message)
 		{
-			this.Log(text, false);
+			this.Log(message, false);
 		}
 
-		/// <summary>
-		/// Adds a message to the queue.
-		/// </summary>
-		/// <param name="caller"></param>
-		/// <param name="text"></param>
-		/// <param name="user"></param>
-		/// <param name="project"></param>
-		private void Log(string text, bool throwError)
+		private void Log(LoggerMessage message, bool probe)
 		{
 			if (_directoryLogs == null)
 			{
@@ -77,11 +66,13 @@ namespace Logging
 
 			var messageArgs = new string[]
 			{
-				DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"),
-				text != null ? text : string.Empty
+				message.CreatedOn.ToString("yyyy-MM-dd HH:mm:ss"),
+				message.Tag != null ? message.Tag : string.Empty,
+				message.Priority.ToString(),
+				message.Text != null ? message.Text : string.Empty
 			};
 
-			text = string.Join(FieldSeparator, messageArgs);
+			var text = string.Join(FieldSeparator, messageArgs);
 
 			lock (LockObject)
 			{
@@ -97,7 +88,7 @@ namespace Logging
 				}
 				catch (Exception ex)
 				{
-					if (throwError)
+					if (probe)
 					{
 						throw (ex);
 					}
@@ -117,7 +108,7 @@ namespace Logging
 				}
 				catch (Exception ex)
 				{
-					if (throwError)
+					if (probe)
 					{
 						throw (ex);
 					}

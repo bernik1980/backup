@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Logging;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using ValueObjects;
@@ -11,7 +12,7 @@ namespace DataSources
 	internal class ProviderOracle : ProviderDatabase
 	{
 		#region Initialization
-		internal ProviderOracle(Configurations.DataSource config) : base(config)
+		internal ProviderOracle(Configurations.DataSource config, LoggerBase logger) : base(config, logger)
 		{
 		}
 		#endregion
@@ -59,15 +60,16 @@ namespace DataSources
 			}
 
 			// execute rman
-			string error = null;
-			this.DumpExecute(argsString, file.Path, false, out error);
+			var didSucceed = this.DumpExecute(argsString, file.Path, false);
 
-			if (error == null && Directory.GetFiles(file.Path).Length == 3)
+			if (didSucceed && Directory.GetFiles(file.Path).Length == 3)
 			{
 				file.CreatedOn = DateTime.UtcNow;
 
 				files.Add(file);
 			}
+
+			_logger.Log(_config.Name, LoggerPriorities.Info, "Created {0} backup{1:'s';'s';''}.", files.Count, files.Count - 1);
 
 			return files;
 		}

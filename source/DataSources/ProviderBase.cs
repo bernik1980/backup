@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Configurations;
+using Logging;
 using System.Collections.Generic;
 using ValueObjects;
 
@@ -9,11 +10,16 @@ namespace DataSources
 	/// </summary>
 	internal abstract class ProviderBase
 	{
-		protected Configurations.DataSource _config;
+		protected DataSource _config;
 		/// <summary>
 		/// The related configuration.
 		/// </summary>
-		public Configurations.DataSource Config { get { return _config; } }
+		public DataSource Config { get { return _config; } }
+
+		/// <summary>
+		/// The logger to use.
+		/// </summary>
+		protected LoggerBase _logger;
 
 		/// <summary>
 		/// Do not backup these.
@@ -23,37 +29,48 @@ namespace DataSources
 		/// Only backup these.
 		/// </summary>
 		protected List<string> _included;
+		private DataSource config;
 
-		internal ProviderBase(Configurations.DataSource config)
+		internal ProviderBase(DataSource config, LoggerBase logger)
 		{
+			_logger = logger;
+
+			_logger.Log(config.Name, LoggerPriorities.Verbose, "Initializing");
+
 			if (string.IsNullOrEmpty(config.Source))
 			{
-				throw new Exception("No source specified");
+				_logger.Log(config.Name, LoggerPriorities.Error, "No source specified.");
+				return;
 			}
 
 			_config = config;
 
 			// get excluded databases
-			if (config.Exclude != null && !string.IsNullOrEmpty(config.Exclude))
+			if (!string.IsNullOrEmpty(_config.Exclude))
 			{
 				_excluded = new List<string>();
 
-				foreach (var database in config.Exclude.Split(','))
+				foreach (var database in _config.Exclude.Split(','))
 				{
 					_excluded.Add(database.Trim());
 				}
 			}
 
 			// get included databases
-			if (config.Include != null && !string.IsNullOrEmpty(config.Include))
+			if (!string.IsNullOrEmpty(_config.Include))
 			{
 				_included = new List<string>();
 
-				foreach (var database in config.Include.Split(','))
+				foreach (var database in _config.Include.Split(','))
 				{
 					_included.Add(database.Trim());
 				}
 			}
+		}
+
+		public ProviderBase(DataSource config)
+		{
+			this.config = config;
 		}
 
 		/// <summary>
@@ -78,15 +95,18 @@ namespace DataSources
 		{
 			var sources = this.GetSources();
 
-			if (_included != null)
+			if (sources != null)
 			{
-				sources.RemoveAll(source => !_included.Contains(source));
-			}
+				if (_included != null)
+				{
+					sources.RemoveAll(source => !_included.Contains(source));
+				}
 
-			// ignore excluded databases
-			if (_excluded != null)
-			{
-				sources.RemoveAll(source => _excluded.Contains(source));
+				// ignore excluded databases
+				if (_excluded != null)
+				{
+					sources.RemoveAll(source => _excluded.Contains(source));
+				}
 			}
 
 			return sources;

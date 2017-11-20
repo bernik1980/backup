@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Logging;
+using System;
 using System.Collections.Generic;
 
 namespace DataStrategies
@@ -10,7 +11,7 @@ namespace DataStrategies
 	internal class ProviderDays : ProviderBase
 	{
 		#region Initialization
-		public ProviderDays(Configurations.DataStrategy config, DataTargets.ProviderBase target) : base(config, target)
+		public ProviderDays(Configurations.DataStrategy config, DataTargets.ProviderBase target, LoggerBase logger) : base(config, target, logger)
 		{
 		}
 		#endregion
@@ -20,6 +21,8 @@ namespace DataStrategies
 		{
 			// save all files via the related DataSource
 			_target.Save(_timestamp.ToString("yyyy-MM-dd"), files);
+
+			_logger.Log(_target.Config.Name, LoggerPriorities.Info, "Applying strategy with {0}.", _config.Provider);
 
 			if (_config.Revisions <= 0)
 			{
@@ -37,7 +40,7 @@ namespace DataStrategies
 			}
 			catch (Exception ex)
 			{
-				Program.Logger.Log("Could not delete old revision. Date: {0:yyyy-MM-dd}, Error: {1}.", date, ex.ToString());
+				_logger.Log(_target.Config.Name, LoggerPriorities.Error, "Could not delete old revision. Date: {0:yyyy-MM-dd}, Error: {1}.", date, ex.ToString());
 			}
 		}
 		#endregion

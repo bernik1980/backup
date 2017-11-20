@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Logging;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
@@ -14,8 +15,8 @@ namespace DataSources
 	internal class ProviderMsSql : ProviderDatabase
 	{
 		#region Initialization
-		internal ProviderMsSql(Configurations.DataSource config)
-			: base(config)
+		internal ProviderMsSql(Configurations.DataSource config, LoggerBase logger)
+			: base(config, logger)
 		{
 		}
 		#endregion
@@ -58,7 +59,7 @@ namespace DataSources
 				conn.Dispose();
 				conn = null;
 
-				Program.Logger.Log("Could not connect to database {0}. Error: ›{1}‹", _config.Name, ex.ToString());
+				_logger.Log(_config.Name, LoggerPriorities.Error, "Could not connect to server. Error: {0}.", ex.ToString());
 			}
 
 			return conn;
@@ -98,8 +99,9 @@ namespace DataSources
 		{
 			var databases = this.GetSourcesFiltered();
 
-			if (databases.Count == 0)
+			if (databases == null || databases.Count == 0)
 			{
+				_logger.Log(_config.Name, LoggerPriorities.Info, "No databases found.");
 				return null;
 			}
 
@@ -126,7 +128,7 @@ namespace DataSources
 						}
 						catch (Exception ex)
 						{
-							Program.Logger.Log("Could not create backup for database {0} for provider {1}. Error: {2}", database, _config.Name, ex.ToString());
+							_logger.Log(_config.Name, LoggerPriorities.Error, "Could not create backup for database {0}. Error: {1}.", database, ex.ToString());
 						}
 					}
 
@@ -140,6 +142,8 @@ namespace DataSources
 
 				conn.Dispose();
 			}
+
+			_logger.Log(_config.Name, LoggerPriorities.Info, "Created {0} backup{1:'s';'s';''}.", files.Count, files.Count - 1);
 
 			return files;
 		}

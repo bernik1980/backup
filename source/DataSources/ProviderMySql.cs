@@ -1,4 +1,5 @@
-﻿using MySql.Data.MySqlClient;
+﻿using Logging;
+using MySql.Data.MySqlClient;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -13,8 +14,8 @@ namespace DataSources
 	internal class ProviderMySql : ProviderDatabase
 	{
 		#region Initialization
-		internal ProviderMySql(Configurations.DataSource config)
-			: base(config)
+		internal ProviderMySql(Configurations.DataSource config, LoggerBase logger)
+			: base(config, logger)
 		{
 		}
 		#endregion
@@ -47,7 +48,7 @@ namespace DataSources
 				}
 				catch (Exception ex)
 				{
-					Program.Logger.Log("Could not connect to database {0}. Error: ›{1}‹", _config.Name, ex.ToString());
+					_logger.Log(_config.Name, LoggerPriorities.Error, "Could not connect to server. Error: {0}", _config.Name, ex.ToString());
 					return null;
 				}
 
@@ -73,8 +74,9 @@ namespace DataSources
 		{
 			var databases = this.GetSourcesFiltered();
 
-			if (databases.Count == 0)
+			if (databases == null || databases.Count == 0)
 			{
+				_logger.Log(_config.Name, LoggerPriorities.Info, "No databases found.");
 				return null;
 			}
 
@@ -111,16 +113,17 @@ namespace DataSources
 				var argsForDatabase = argsString;
 				argsForDatabase += " --databases \"" + database + "\"";
 
-				string error = null;
-				this.DumpExecute(argsForDatabase, file.Path, true, out error);
+				var didSucceed = this.DumpExecute(argsForDatabase, file.Path, true);
 
-				if (error == null && File.Exists(file.Path))
+				if (didSucceed && File.Exists(file.Path))
 				{
 					file.CreatedOn = DateTime.UtcNow;
 
 					files.Add(file);
 				}
 			}
+
+			_logger.Log(_config.Name, LoggerPriorities.Info, "Created {0} backup{1:'s';'s';''}.", files.Count, files.Count - 1);
 
 			return files;
 		}

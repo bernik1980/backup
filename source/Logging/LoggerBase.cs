@@ -1,25 +1,49 @@
-﻿namespace Logging
+﻿using System.Text.RegularExpressions;
+
+namespace Logging
 {
 	/// <summary>
 	/// Base class for all loggers.
 	/// </summary>
 	public abstract class LoggerBase
 	{
-		/// <summary>
-		/// Logs the specified text.
-		/// The text will be used as format for the given args.
-		/// </summary>
-		/// <param name="format"></param>
-		/// <param name="args"></param>
-		public void Log(string format, params object[] args)
+		private LoggerPriorities _priorities;
+
+		public LoggerBase(LoggerPriorities priorities)
 		{
-			this.Log(args != null ? string.Format(format, args) : format);
+			_priorities = priorities;
 		}
 
-		/// <summary>
-		/// Logs the specified text.
-		/// </summary>
-		/// <param name="text"></param>
-		public abstract void Log(string text);
+		public void Log(object tag, LoggerPriorities priority, string format, params object[] args)
+		{
+			if (format != null)
+			{
+				format = Regex.Replace(format, " ({[^{}]+})", " ›$1‹");
+			}
+
+			this.Log(tag, priority, args != null ? string.Format(format, args) : format);
+		}
+
+		public void Log(object tag, LoggerPriorities priority, string text)
+		{
+			this.Log(new LoggerMessage
+			{
+				Priority = priority,
+				Tag = tag != null ? tag.ToString() : string.Empty,
+				Text = text
+			});
+		}
+
+		public void Log(LoggerMessage message)
+		{
+			if ((_priorities & message.Priority) == LoggerPriorities.None)
+			{
+				return;
+			}
+
+			this.LogInternal(message);
+		}
+
+		protected abstract void LogInternal(LoggerMessage message);
 	}
 }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Logging;
+using System;
 using System.Collections.Generic;
 
 namespace DataTargets
@@ -15,11 +16,20 @@ namespace DataTargets
 		public Configurations.DataTarget Config { get { return _config; } }
 
 		/// <summary>
+		/// The logger to use.
+		/// </summary>
+		protected LoggerBase _logger;
+
+		/// <summary>
 		/// Creates a new provider with the related configuration.
 		/// </summary>
 		/// <param name="config"></param>
-		internal ProviderBase(Configurations.DataTarget config)
+		internal ProviderBase(Configurations.DataTarget config, LoggerBase logger)
 		{
+			_logger = logger;
+
+			_logger.Log(config.Name, LoggerPriorities.Verbose, "Initializing");
+
 			_config = config;
 		}
 

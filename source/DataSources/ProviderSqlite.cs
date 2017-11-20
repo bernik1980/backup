@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Logging;
+using System;
 using System.Collections.Generic;
 using System.Data.SQLite;
 using System.IO;
@@ -17,8 +18,13 @@ namespace DataSources
 		private string _directorySourceFilter;
 
 		#region Initialization
-		internal ProviderSqlite(Configurations.DataSource config) : base(config)
+		internal ProviderSqlite(Configurations.DataSource config, LoggerBase logger) : base(config, logger)
 		{
+			if (_config == null)
+			{
+				return;
+			}
+
 			// assume the last path component is the filter
 			_directorySourceFilter = Path.GetFileName(_config.Source);
 			// if not, clear it
@@ -34,11 +40,6 @@ namespace DataSources
 			{
 				_directorySource = Path.GetDirectoryName(_directorySource);
 			}
-
-			if (!Directory.Exists(_directorySource))
-			{
-				throw new Exception("Source directory does not exist.");
-			}
 		}
 		#endregion
 
@@ -47,7 +48,7 @@ namespace DataSources
 		{
 			if (!File.Exists(path))
 			{
-				Program.Logger.Log("Could not open SQLite database at path: ›{0}‹", path);
+				_logger.Log(_config.Name, LoggerPriorities.Error, "Could not open SQLite database at path: {0}", path);
 				return null;
 			}
 
@@ -65,7 +66,7 @@ namespace DataSources
 				conn.Dispose();
 				conn = null;
 
-				Program.Logger.Log("Could not connect to database ›{0}‹. Error: ›{1}‹", _config.Name, ex.ToString());
+				_logger.Log(_config.Name, LoggerPriorities.Error, "Could not connect to server. Error: {0}", _config.Name, ex.ToString());
 			}
 
 			return conn;
@@ -75,6 +76,11 @@ namespace DataSources
 		#region ProviderBase
 		protected override List<string> GetSources()
 		{
+			if (_config.Source == null)
+			{
+				return null;
+			}
+
 			var databases = new List<string>();
 
 			// if the source is a file, there can only be one database
@@ -101,12 +107,18 @@ namespace DataSources
 
 			var databases = this.GetSourcesFiltered();
 
+			if (databases == null || databases.Count == 0)
+			{
+
+			}
+
 			foreach (var database in databases)
 			{
 				// open a connection to the source database
 				var connSource = this.GetConnection(Path.Combine(_directorySource, database));
 				if (connSource == null)
 				{
+					_logger.Log(_config.Name, LoggerPriorities.Info, "No databases found.");
 					return null;
 				}
 
@@ -119,7 +131,7 @@ namespace DataSources
 				}
 				catch (Exception ex)
 				{
-					Program.Logger.Log("Could not create target database for backup. ›{0}‹. Error: ›{1}‹", _config.Name, ex.ToString());
+					_logger.Log(_config.Name, LoggerPriorities.Error, "Could not create target database for backup. Error: {0}.", ex);
 					return null;
 				}
 
@@ -143,6 +155,8 @@ namespace DataSources
 					files.Add(backupFile);
 				}
 			}
+
+			_logger.Log(_config.Name, LoggerPriorities.Info, "Created {0} backup{1:'s';'s';''}.", files.Count, files.Count - 1);
 
 			return files;
 		}
