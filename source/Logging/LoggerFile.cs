@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Reflection;
 
 namespace Logging
 {
@@ -27,8 +28,22 @@ namespace Logging
 		/// </summary>
 		private readonly string _header = string.Format("Timestamp{0}Text", FieldSeparator);
 
-		public LoggerFile(string directory, LoggerPriorities priorities) : base(priorities)
+		public LoggerFile(Configurations.Logger config) : base(config)
 		{
+			var directory = _config.Settings;
+
+			// if no directory is set, we try to write to the application data folder
+			if (string.IsNullOrEmpty(directory))
+			{
+				directory = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+				directory = Path.Combine(directory, Assembly.GetExecutingAssembly().GetName().Name);
+				directory = Path.Combine(directory, "Logs");
+			}
+			else if (!Path.IsPathRooted(directory))
+			{
+				directory = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), directory);
+			}
+
 			_directoryLogs = directory;
 
 			// this will thow if parent directory does not exist or permission is missing

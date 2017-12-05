@@ -7,11 +7,43 @@ namespace Logging
 	/// </summary>
 	public abstract class LoggerBase
 	{
-		private LoggerPriorities _priorities;
+		protected Configurations.Logger _config;
+		protected LoggerPriorities _priorities;
 
-		public LoggerBase(LoggerPriorities priorities)
+		public LoggerBase(Configurations.Logger config)
 		{
-			_priorities = priorities;
+			_config = config;
+
+			_priorities = LoggerPriorities.None;
+
+			// parse priorities
+			if (_config != null && !string.IsNullOrEmpty(_config.Priorities))
+			{
+				_priorities = LoggerPriorities.None;
+
+				var configPriorities = _config.Priorities.ToLower().Split(',');
+				foreach (var configPriority in configPriorities)
+				{
+					switch (configPriority.Trim())
+					{
+						case "verbose":
+							_priorities |= LoggerPriorities.Verbose;
+							break;
+						case "info":
+							_priorities |= LoggerPriorities.Info;
+							break;
+						case "error":
+							_priorities |= LoggerPriorities.Error;
+							break;
+					}
+				}
+			}
+
+			// if no priorities were found, log all
+			if (_priorities == LoggerPriorities.None)
+			{
+				_priorities = LoggerPriorities.All;
+			}
 		}
 
 		public void Log(object tag, LoggerPriorities priority, string format, params object[] args)

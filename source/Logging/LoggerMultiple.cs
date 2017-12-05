@@ -7,12 +7,12 @@ namespace Logging
 	{
 		private IEnumerable<LoggerBase> _loggers;
 
-		public LoggerMultiple(LoggerPriorities priorities) : base(priorities)
+		public LoggerMultiple(Configurations.Logger config) : base(config)
 		{
-			throw new NotSupportedException("LoggerMultiple can not be initilized with priorities, since its not logging itself.");
+			throw new NotSupportedException("LoggerMultiple can not be initilized with a configuration, since its not logging itself.");
 		}
 
-		public LoggerMultiple(IEnumerable<LoggerBase> loggers) : base(LoggerPriorities.All)
+		public LoggerMultiple(IEnumerable<LoggerBase> loggers) : base(null)
 		{
 			_loggers = loggers;
 		}

@@ -7,7 +7,7 @@ namespace Logging
 	/// </summary>
 	public class LoggerConsole : LoggerBase
 	{
-		public LoggerConsole(LoggerPriorities priorities) : base(priorities)
+		public LoggerConsole(Configurations.Logger config) : base(config)
 		{
 			Console.BackgroundColor = ConsoleColor.Black;
 		}

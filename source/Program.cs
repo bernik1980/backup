@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Security.AccessControl;
 using System.Security.Principal;
 using System.Threading.Tasks;
@@ -133,36 +132,6 @@ class Program
 				continue;
 			}
 
-			// parse priorities
-			var priorities = LoggerPriorities.None;
-			if (!string.IsNullOrEmpty(configLogger.Priorities))
-			{
-				priorities = LoggerPriorities.None;
-
-				var configPriorities = configLogger.Priorities.ToLower().Split(',');
-				foreach (var configPriority in configPriorities)
-				{
-					switch (configPriority.Trim())
-					{
-						case "verbose":
-							priorities |= LoggerPriorities.Verbose;
-							break;
-						case "info":
-							priorities |= LoggerPriorities.Info;
-							break;
-						case "error":
-							priorities |= LoggerPriorities.Error;
-							break;
-					}
-				}
-			}
-
-			// if no priorities were found, log all
-			if (priorities == LoggerPriorities.None)
-			{
-				priorities = LoggerPriorities.All;
-			}
-
 			LoggerBase logger = null;
 
 			// try to greate loggers based on provider name
@@ -171,22 +140,10 @@ class Program
 				switch (configLogger.Provider.ToLower())
 				{
 					case "console":
-						logger = new LoggerConsole(priorities);
+						logger = new LoggerConsole(configLogger);
 						break;
 					case "file":
-						var directory = configLogger.Settings;
-						if (string.IsNullOrEmpty(directory))
-						{
-							directory = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-							directory = Path.Combine(directory, Assembly.GetExecutingAssembly().GetName().Name);
-							directory = Path.Combine(directory, "Logs");
-						}
-						else if (!Path.IsPathRooted(directory))
-						{
-							directory = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), directory);
-						}
-
-						logger = new LoggerFile(directory, priorities);
+						logger = new LoggerFile(configLogger);
 						break;
 				}
 			}
