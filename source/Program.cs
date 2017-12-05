@@ -103,6 +103,11 @@ class Program
 		}
 
 		_logger.Log(_loggerTag, LoggerPriorities.Info, "Completed backup run.");
+
+		if (Environment.UserInteractive)
+		{
+			Console.ReadKey();
+		}
 	}
 
 	/// <summary>

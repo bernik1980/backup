@@ -14,6 +14,11 @@ namespace Logging
 
 		protected override void LogInternal(LoggerMessage message)
 		{
+			if (!Environment.UserInteractive)
+			{
+				return;
+			}
+
 			switch (message.Priority)
 			{
 				case LoggerPriorities.Error:
