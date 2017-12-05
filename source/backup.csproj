@@ -114,6 +114,7 @@
     <Compile Include="DataTargets\ProviderDirectory.cs" />
     <Compile Include="DataTargets\ProviderDropbox.cs" />
     <Compile Include="Logging\LoggerConsole.cs" />
+    <Compile Include="Logging\LoggerEventLog.cs" />
     <Compile Include="Logging\LoggerFile.cs" />
     <Compile Include="Logging\LoggerBase.cs" />
     <Compile Include="Logging\LoggerMessage.cs" />

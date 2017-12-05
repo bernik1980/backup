@@ -141,6 +141,9 @@ class Program
 					case "file":
 						logger = new LoggerFile(configLogger);
 						break;
+					case "eventlog":
+						logger = new LoggerEventLog(configLogger);
+						break;
 				}
 			}
 			catch (Exception ex)
