@@ -61,16 +61,7 @@ class Program
 		_logger.Log(_loggerTag, LoggerPriorities.Info, "Starting backup run.");
 
 		// try to initialize temp directory
-		try
-		{
-			InitializeTempDirectory();
-		}
-		catch (Exception ex)
-		{
-			_logger.Log(_loggerTag, LoggerPriorities.Error, "Could not create temp directory at {0}. Error: {1}. Quitting", _directoryTemp, ex.ToString());
-
-			return;
-		}
+		InitializeTempDirectory();
 
 		// get sources and targets from config
 		var providersSource = this.GetSources();
@@ -179,13 +170,20 @@ class Program
 		_directoryTemp = Path.GetTempPath();
 		_directoryTemp = Path.Combine(_directoryTemp, Guid.NewGuid().ToString());
 
-		Directory.CreateDirectory(_directoryTemp);
+		try
+		{
+			Directory.CreateDirectory(_directoryTemp);
 
-		// set full access
-		var directoryInfo = new DirectoryInfo(_directoryTemp);
-		var directorySecurity = directoryInfo.GetAccessControl();
-		directorySecurity.AddAccessRule(new FileSystemAccessRule(new SecurityIdentifier(WellKnownSidType.WorldSid, null), FileSystemRights.FullControl, InheritanceFlags.ObjectInherit | InheritanceFlags.ContainerInherit, PropagationFlags.NoPropagateInherit, AccessControlType.Allow));
-		directoryInfo.SetAccessControl(directorySecurity);
+			// set full access
+			var directoryInfo = new DirectoryInfo(_directoryTemp);
+			var directorySecurity = directoryInfo.GetAccessControl();
+			directorySecurity.AddAccessRule(new FileSystemAccessRule(new SecurityIdentifier(WellKnownSidType.WorldSid, null), FileSystemRights.FullControl, InheritanceFlags.ObjectInherit | InheritanceFlags.ContainerInherit, PropagationFlags.NoPropagateInherit, AccessControlType.Allow));
+			directoryInfo.SetAccessControl(directorySecurity);
+		}
+		catch (Exception ex)
+		{
+			_logger.Log(_loggerTag, LoggerPriorities.Error, "Could not create temp directory at {0}. Error: {1}. Quitting", _directoryTemp, ex.ToString());
+		}
 	}
 
 	/// <summary>
