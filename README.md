@@ -3,6 +3,7 @@ A .NET application to backup databases and files to another directory or a dropb
 
 ## Supported databases
 - Oracle
+- IBM DB2
 - Microsoft-SQL-Server and Microsoft-SQL-Server Express Edition
 - MySQL
 - Postgre SQL
