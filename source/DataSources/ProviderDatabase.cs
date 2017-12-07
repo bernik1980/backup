@@ -79,7 +79,7 @@ namespace DataSources
 		/// <param name="filePathBackup">The path to the backup file to create.</param>
 		/// <param name="outputToFile">If true, the output of the dump-process will be saved to the filePathBackup. If false, the dump-binary will handle this itself.</param>
 		/// <param name="error">If set, an error did occur.</param>
-		protected bool DumpExecute(string args, string filePathBackup, bool outputToFile)
+		protected bool DumpExecute(string args, string filePathBackup, bool outputToFile, Dictionary<string, string> environmentVars = null)
 		{
 			if (_filePathDump == null)
 			{
@@ -100,6 +100,13 @@ namespace DataSources
 			startInfo.RedirectStandardError = true;
 			startInfo.Arguments = args;
 			startInfo.UseShellExecute = false;
+			if (environmentVars != null)
+			{
+				foreach (var environmentVar in environmentVars)
+				{
+					startInfo.EnvironmentVariables[environmentVar.Key] = environmentVar.Value;
+				}
+			}
 
 			// start the process
 			var process = Process.Start(startInfo);

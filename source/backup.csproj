@@ -101,6 +101,7 @@
     <Compile Include="Configurations\DataSourcesSection.cs" />
     <Compile Include="DataSources\ProviderBase.cs" />
     <Compile Include="DataSources\ProviderDatabase.cs" />
+    <Compile Include="DataSources\ProviderDB2.cs" />
     <Compile Include="DataSources\ProviderFile.cs" />
     <Compile Include="DataSources\ProviderMySql.cs" />
     <Compile Include="DataSources\ProviderMsSql.cs" />

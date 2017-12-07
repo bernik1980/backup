@@ -223,6 +223,9 @@ class Program
 				case "oracle":
 					source = new DataSources.ProviderOracle(dataSource, _logger);
 					break;
+				case "db2":
+					source = new DataSources.ProviderDB2(dataSource, _logger);
+					break;
 				case "mysql":
 					source = new DataSources.ProviderMySql(dataSource, _logger);
 					break;
