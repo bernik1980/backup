@@ -30,7 +30,7 @@ A .NET application to backup databases and files to another directory or a dropb
 2. Each backup is zipped with best compression
 3. Each zip is saved/uploaded with each dataTarget
    * directory: Copy to a folder
-   * dropbox: Uploaded to dropbox
+   * dropbox: Upload to a dropbox account
    * ftp: Upload to a ftp server
 4. Old backups are deleted based on a strategry
    * days: Daily backups for unlimited or specified number of days
