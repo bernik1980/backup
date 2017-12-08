@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using ValueObjects;
 
 namespace DataSources
 {
@@ -13,14 +14,14 @@ namespace DataSources
 		/// <summary>
 		/// Connection information for the database.
 		/// </summary>
-		private Dictionary<string, string> _connection;
+		protected Configuration _connection;
 
-		protected string _bin { get { return this.GetValueFromConnection("bin"); } }
-		protected string _host { get { return this.GetValueFromConnection("host"); } }
-		protected string _port { get { return this.GetValueFromConnection("port"); } }
-		protected int _timeout {  get { return this.GetValueFromConnectionInt("timeout", 120); } }
-		protected string _user { get { return this.GetValueFromConnection("user"); } }
-		protected string _password { get { return this.GetValueFromConnection("password"); } }
+		protected string _bin { get { return _connection.GetValue<string>("bin"); } }
+		protected string _host { get { return _connection.GetValue<string>("host"); } }
+		protected string _port { get { return _connection.GetValue<string>("port"); } }
+		protected int _timeout {  get { return _connection.GetValue<int>("timeout"); } }
+		protected string _user { get { return _connection.GetValue<string>("user"); } }
+		protected string _password { get { return _connection.GetValue<string>("password"); } }
 
 		/// <summary>
 		/// If a binary directory and a dump file name is set, this will be initalized with the full path.
@@ -30,26 +31,7 @@ namespace DataSources
 		#region Initialization
 		internal ProviderDatabase(Configurations.DataSource config, LoggerBase logger) : base(config, logger)
 		{
-			_connection = new Dictionary<string, string>();
-
-			// parse configuration
-			if (_config != null)
-			{
-				foreach (var nameValue in _config.Source.Split(';'))
-				{
-					var nameValueArgs = nameValue.Split('=');
-					var name = nameValueArgs[0].Trim().ToLower().Replace(" ", "");
-
-					if (string.IsNullOrEmpty(name))
-					{
-						continue;
-					}
-
-					var value = nameValueArgs.Length > 1 ? nameValueArgs[1].Trim() : null;
-
-					_connection[name.ToLower()] = value;
-				}
-			}
+			_connection = new Configuration(_config.Source);
 
 			// check availability of dump-binary
 			_filePathDump = this.DumpGetBinaryName();
@@ -150,28 +132,6 @@ namespace DataSources
 			}
 
 			return true;
-		}
-
-		/// <summary>
-		/// Gets the value from the _connection. This is a litte wrappter to avoid key not available errors.
-		/// </summary>
-		/// <param name="key"></param>
-		/// <returns></returns>
-		protected string GetValueFromConnection(string key, string defaultValue = null)
-		{
-			return _connection != null && _connection.ContainsKey(key) ? _connection[key] : defaultValue;
-		}
-
-		protected int GetValueFromConnectionInt(string key, int defaultValue = 0)
-		{
-			var value = default(int);
-
-			if (!int.TryParse(this.GetValueFromConnection(key), out value))
-			{
-				value = defaultValue;
-			}
-
-			return value;
 		}
 		#endregion
 	}

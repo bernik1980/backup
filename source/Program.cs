@@ -277,6 +277,9 @@ class Program
 				case "dropbox":
 					target = new DataTargets.ProviderDropbox(dataTarget, _logger);
 					break;
+				case "ftp":
+					target = new DataTargets.ProviderFtp(dataTarget, _logger);
+					break;
 			}
 
 			if (target == null)

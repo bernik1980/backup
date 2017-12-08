@@ -114,6 +114,7 @@
     <Compile Include="DataTargets\ProviderBase.cs" />
     <Compile Include="DataTargets\ProviderDirectory.cs" />
     <Compile Include="DataTargets\ProviderDropbox.cs" />
+    <Compile Include="DataTargets\ProviderFtp.cs" />
     <Compile Include="Logging\LoggerConsole.cs" />
     <Compile Include="Logging\LoggerEventLog.cs" />
     <Compile Include="Logging\LoggerFile.cs" />
@@ -124,6 +125,7 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ValueObjects\BackupFile.cs" />
+    <Compile Include="ValueObjects\Configuration.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
