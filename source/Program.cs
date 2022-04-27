@@ -124,7 +124,7 @@ class Program
 		{
 			if (string.IsNullOrEmpty(configLogger.Provider))
 			{
-				_logger.Log(_loggerTag, LoggerPriorities.Error, "Ignoring Logger without provider.");
+				Console.WriteLine("Ignoring Logger without provider.");
 				continue;
 			}
 
@@ -153,7 +153,7 @@ class Program
 
 			if (logger == null)
 			{
-				_logger.Log(_loggerTag, LoggerPriorities.Error, "Unknown logger {0}", configLogger.Provider);
+				Console.WriteLine(string.Format("Unknown logger {0}", configLogger.Provider));
 				continue;
 			}
 
