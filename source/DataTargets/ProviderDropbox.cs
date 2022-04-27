@@ -169,7 +169,7 @@ namespace DataTargets
 							}
 							else
 							{
-								await _client.Files.UploadSessionFinishAsync(cursor, new CommitInfo(path, WriteMode.Overwrite.Instance), memoryStream);
+								await _client.Files.UploadSessionFinishAsync(cursor, new CommitInfo(path, WriteMode.Overwrite.Instance), null, memoryStream);
 
 								break;
 							}
