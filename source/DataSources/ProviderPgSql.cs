@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
+using System.Linq;
 using ValueObjects;
 
 namespace DataSources
@@ -74,7 +75,7 @@ namespace DataSources
 		{
 			var databases = this.GetSourcesFiltered();
 
-			if (databases.Count == 0)
+			if (databases == null || !databases.Any())
 			{
 				_logger.Log(_config.Name, LoggerPriorities.Info, "No databases found.");
 				return null;
@@ -116,7 +117,7 @@ namespace DataSources
 				argsForDatabase += " --file \"" + file.Path + "\"";
 				argsForDatabase += " \"" + database + "\"";
 
-				var didSucceed = this.DumpExecute(argsForDatabase, file.Path, false);
+				var didSucceed = this.DumpExecute(argsForDatabase, file.Path, false, _password != null ? new Dictionary<string, string> { { "PGPASSWORD", _password } } : null);
 
 				if (didSucceed && File.Exists(file.Path))
 				{
